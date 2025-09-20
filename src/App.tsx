@@ -12,7 +12,11 @@ const uniforms = {
   u_color: { value: new Color(0x00ff00) },
 };
 const vertexShader = `
+    varying vec2 v_uv;
+    varying vec3 v_position;
     void main() {
+      v_uv = uv;
+      v_position = position;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);   
     }
   `;
@@ -22,11 +26,21 @@ const fragmentShader = `
     uniform vec2 u_pointer;
     uniform vec3 u_color;
     uniform float u_time; 
+    varying vec2 v_uv;
+    varying vec3 v_position;
+
     void main() {
       vec2 v = u_pointer / u_resolution;
+      vec2 uv = gl_FragCoord.xy / u_resolution;
       vec3 colorP = vec3(v.x, 0.0, v.y);
       vec3 colorT = vec3((sin(u_time) + 1.0) / 2.0, 0.0, (cos(u_time) + 1.0) / 2.0);
-      gl_FragColor = vec4(colorT, 1.0); 
+      vec3 blendedColor = mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0), uv.y);
+      vec3 varyingColor = vec3(v_position.x, v_position.y, 0.0);
+      vec3 stepColor = vec3(0.0);
+      stepColor.r = step(-1.0, v_position.x);
+      stepColor.g = step(-1.0, v_position.y);
+      stepColor.y = step(1.0, length(v_position.xy));
+      gl_FragColor = vec4(stepColor, 1.0); 
     }
   `;
 
